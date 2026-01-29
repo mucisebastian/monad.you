@@ -141,8 +141,6 @@ export function SubmitForm() {
     )
   }
 
-  const currentUserName = users.find(u => u.slug === currentUserSlug)?.name || '?'
-
   return (
     <div className="max-w-lg mx-auto">
       <div className="text-center mb-8 animate-fade-in">
