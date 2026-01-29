@@ -1,73 +1,115 @@
-# React + TypeScript + Vite
+# ☉ monad.you
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A minimal link-sharing app for two friends. Send links, watch later, archive forever.
 
-Currently, two official plugins are available:
+## What is this?
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+monad.you is a personal link inbox for Muci and AJ to share interesting content with each other. No social feed, no algorithms—just a simple way to drop links and come back to them later.
 
-## React Compiler
+## Features
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- **Simple sharing** - Paste a URL, add an optional note, send it
+- **Auto previews** - Automatically fetches titles and thumbnails for any link
+- **Rate limiting** - 2 submissions per person per day (resets at midnight)
+- **Inbox & Archive** - Mark links as watched to move them to your archive
+- **Search & filter** - Find old links by title or platform type
+- **Platform detection** - Automatically tags YouTube, Twitter, Substack, articles, books, and more
+- **Dark mode** - Clean, minimal aesthetic with smooth animations
 
-## Expanding the ESLint configuration
+## Tech Stack
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+- **Frontend**: React + Vite + TypeScript
+- **Backend**: Supabase (PostgreSQL)
+- **Styling**: Tailwind CSS v4
+- **Routing**: React Router
+- **Deployment**: Vercel
+- **Metadata**: jsonlink.io & microlink.io APIs
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+## Local Development
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+### Prerequisites
+- Node.js 18+
+- Supabase account
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+### Setup
+
+1. Clone the repository:
+```bash
+git clone https://github.com/mucisebastian/monad.you.git
+cd monad.you
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+2. Install dependencies:
+```bash
+npm install
 ```
+
+3. Set up Supabase:
+   - Create a new Supabase project
+   - Run the SQL in `supabase/schema.sql` in the SQL Editor
+   - Copy your project URL and anon key
+
+4. Create `.env` file:
+```bash
+cp .env.example .env
+```
+
+Then add your Supabase credentials:
+```
+VITE_SUPABASE_URL=your_supabase_url
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+```
+
+5. Start the dev server:
+```bash
+npm run dev
+```
+
+Visit `http://localhost:5173`
+
+## Deployment
+
+The app is configured for Vercel deployment:
+
+1. Push to GitHub
+2. Import the repo in Vercel
+3. Add environment variables in Vercel settings
+4. Deploy
+
+## Routes
+
+- `/` - Submit a link
+- `/muci` - Muci's inbox
+- `/aj` - AJ's inbox
+- `/muci/archive` - Muci's archive
+- `/aj/archive` - AJ's archive
+
+## Database Schema
+
+Two simple tables:
+
+**users** - Stores Muci and AJ
+- `id` (uuid)
+- `slug` (text) - "muci" or "aj"
+- `name` (text)
+
+**links** - Stores all shared links
+- `id` (uuid)
+- `sender_id` (uuid) - Who sent it
+- `recipient_id` (uuid) - Who received it
+- `url` (text)
+- `title` (text) - Auto-fetched
+- `thumbnail` (text) - Auto-fetched image URL
+- `platform_tag` (text) - YouTube, Tweet, Article, etc.
+- `note` (text) - Optional message
+- `watched` (boolean)
+- `watched_at` (timestamp)
+- `created_at` (timestamp)
+
+## License
+
+Personal project. Not open for contributions.
+
+---
+
+Built with ☉ by Muci & Claude
