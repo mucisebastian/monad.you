@@ -4,7 +4,7 @@ A minimal link-sharing app for two friends. Send links, watch later, archive for
 
 ## What is this?
 
-monad.you is a personal link inbox for Muci and AJ to share interesting content with each other. No social feed, no algorithms—just a simple way to drop links and come back to them later.
+monad.you is a personal link inbox for friends to share interesting content with each other. No social feed, no algorithms—just a simple way to drop links and come back to them later.
 
 ## Features
 
@@ -88,9 +88,9 @@ The app is configured for Vercel deployment:
 
 Two simple tables:
 
-**users** - Stores Muci and AJ
+**users** - Stores Friend 1 and Friend 2 
 - `id` (uuid)
-- `slug` (text) - "muci" or "aj"
+- `slug` (text) - "Friend 1" or "Friend 2"
 - `name` (text)
 
 **links** - Stores all shared links
@@ -112,4 +112,4 @@ Personal project. Not open for contributions.
 
 ---
 
-Built with ☉ by Muci & Claude
+Built with ☉ by Muci
