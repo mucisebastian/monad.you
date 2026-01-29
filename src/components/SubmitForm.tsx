@@ -7,7 +7,6 @@ import { Countdown } from './Countdown'
 
 export function SubmitForm() {
   const [users, setUsers] = useState<User[]>([])
-  const [senderSlug, setSenderSlug] = useState<string>('')
   const [recipientSlug, setRecipientSlug] = useState<string>('')
   const [url, setUrl] = useState('')
   const [note, setNote] = useState('')
@@ -30,8 +29,7 @@ export function SubmitForm() {
         console.log('Loaded users:', data)
         setUsers(data)
         if (data.length > 0) {
-          setSenderSlug(data[0].slug)
-          setRecipientSlug(data[1]?.slug || data[0].slug)
+          setRecipientSlug(data[0].slug)
         }
       } catch (err) {
         console.error('Failed to load users:', err)
@@ -43,12 +41,13 @@ export function SubmitForm() {
     loadUsers()
   }, [])
 
-  // Check rate limit when sender changes
+  // Check rate limit when recipient changes
   useEffect(() => {
     async function checkRateLimit() {
-      if (!senderSlug || users.length === 0) return
+      if (!recipientSlug || users.length === 0) return
 
-      const sender = users.find(u => u.slug === senderSlug)
+      // If sending TO this person, the sender is the OTHER person
+      const sender = users.find(u => u.slug !== recipientSlug)
       if (!sender) return
 
       const { canSubmit: allowed, nextSubmitTime: next, submissionsToday: count } = await canUserSubmit(sender.id)
@@ -57,7 +56,7 @@ export function SubmitForm() {
       setSubmissionsToday(count)
     }
     checkRateLimit()
-  }, [senderSlug, users, success])
+  }, [recipientSlug, users, success])
 
   // Auto-detect platform when URL changes
   useEffect(() => {
@@ -84,15 +83,10 @@ export function SubmitForm() {
     }
 
     const recipient = users.find(u => u.slug === recipientSlug)
-    const sender = users.find(u => u.slug === senderSlug)
+    const sender = users.find(u => u.slug !== recipientSlug)
 
     if (!recipient || !sender) {
       setError('Invalid users')
-      return
-    }
-
-    if (sender.id === recipient.id) {
-      setError('You cannot send a link to yourself')
       return
     }
 
@@ -141,7 +135,7 @@ export function SubmitForm() {
     )
   }
 
-  const senderName = users.find(u => u.slug === senderSlug)?.name || '?'
+  const senderName = users.find(u => u.slug !== recipientSlug)?.name || '?'
 
   return (
     <div className="max-w-lg mx-auto">
@@ -173,30 +167,6 @@ export function SubmitForm() {
         </div>
       ) : (
         <form onSubmit={handleSubmit} className="space-y-4 animate-fade-in">
-          {/* Sender */}
-          <div>
-            <label className="block text-xs font-mono text-zinc-400 mb-2">
-              From:
-            </label>
-            <select
-              value={senderSlug}
-              onChange={(e) => {
-                setSenderSlug(e.target.value)
-                setSuccess(false)
-              }}
-              className="w-full px-3 py-2 rounded bg-zinc-900 border border-zinc-700 text-white font-mono focus:outline-none focus:border-zinc-500 transition-all duration-200 hover:border-zinc-600"
-            >
-              {users.map(user => (
-                <option key={user.id} value={user.slug}>
-                  {user.name}
-                </option>
-              ))}
-            </select>
-            <p className="mt-1 text-xs text-zinc-500">
-              <span className="text-zinc-400">{2 - submissionsToday}/2 left today</span>
-            </p>
-          </div>
-
           {/* Recipient */}
           <div>
             <label className="block text-xs font-mono text-zinc-400 mb-2">
@@ -216,6 +186,11 @@ export function SubmitForm() {
                 </option>
               ))}
             </select>
+            <p className="mt-1 text-xs text-zinc-500">
+              Sending as: <span className="text-zinc-400">{senderName}</span>
+              {' · '}
+              <span className="text-zinc-400">{2 - submissionsToday}/2 left today</span>
+            </p>
           </div>
 
           {/* URL */}
