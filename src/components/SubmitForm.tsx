@@ -7,6 +7,7 @@ import { Countdown } from './Countdown'
 
 export function SubmitForm() {
   const [users, setUsers] = useState<User[]>([])
+  const [currentUserSlug, setCurrentUserSlug] = useState<string>('')
   const [recipientSlug, setRecipientSlug] = useState<string>('')
   const [url, setUrl] = useState('')
   const [note, setNote] = useState('')
@@ -29,7 +30,8 @@ export function SubmitForm() {
         console.log('Loaded users:', data)
         setUsers(data)
         if (data.length > 0) {
-          setRecipientSlug(data[0].slug)
+          setCurrentUserSlug(data[0].slug)
+          setRecipientSlug(data[1]?.slug || data[0].slug)
         }
       } catch (err) {
         console.error('Failed to load users:', err)
@@ -41,22 +43,21 @@ export function SubmitForm() {
     loadUsers()
   }, [])
 
-  // Check rate limit when recipient changes
+  // Check rate limit when current user changes
   useEffect(() => {
     async function checkRateLimit() {
-      if (!recipientSlug || users.length === 0) return
+      if (!currentUserSlug || users.length === 0) return
 
-      // If sending TO this person, the sender is the OTHER person
-      const sender = users.find(u => u.slug !== recipientSlug)
-      if (!sender) return
+      const currentUser = users.find(u => u.slug === currentUserSlug)
+      if (!currentUser) return
 
-      const { canSubmit: allowed, nextSubmitTime: next, submissionsToday: count } = await canUserSubmit(sender.id)
+      const { canSubmit: allowed, nextSubmitTime: next, submissionsToday: count } = await canUserSubmit(currentUser.id)
       setCanSubmit(allowed)
       setNextSubmitTime(next)
       setSubmissionsToday(count)
     }
     checkRateLimit()
-  }, [recipientSlug, users, success])
+  }, [currentUserSlug, users, success])
 
   // Auto-detect platform when URL changes
   useEffect(() => {
@@ -83,10 +84,15 @@ export function SubmitForm() {
     }
 
     const recipient = users.find(u => u.slug === recipientSlug)
-    const sender = users.find(u => u.slug !== recipientSlug)
+    const sender = users.find(u => u.slug === currentUserSlug)
 
     if (!recipient || !sender) {
       setError('Invalid users')
+      return
+    }
+
+    if (sender.id === recipient.id) {
+      setError('Cannot send to yourself')
       return
     }
 
@@ -135,7 +141,7 @@ export function SubmitForm() {
     )
   }
 
-  const senderName = users.find(u => u.slug !== recipientSlug)?.name || '?'
+  const currentUserName = users.find(u => u.slug === currentUserSlug)?.name || '?'
 
   return (
     <div className="max-w-lg mx-auto">
@@ -162,11 +168,35 @@ export function SubmitForm() {
             }}
           />
           <p className="text-center text-zinc-500 text-sm">
-            {senderName} has used both submissions today (2/2)
+            You've used both submissions today (2/2)
           </p>
         </div>
       ) : (
         <form onSubmit={handleSubmit} className="space-y-4 animate-fade-in">
+          {/* Who are you */}
+          <div>
+            <label className="block text-xs font-mono text-zinc-400 mb-2">
+              Who are you?
+            </label>
+            <select
+              value={currentUserSlug}
+              onChange={(e) => {
+                setCurrentUserSlug(e.target.value)
+                setSuccess(false)
+              }}
+              className="w-full px-3 py-2 rounded bg-zinc-900 border border-zinc-700 text-white font-mono focus:outline-none focus:border-zinc-500 transition-all duration-200 hover:border-zinc-600"
+            >
+              {users.map(user => (
+                <option key={user.id} value={user.slug}>
+                  {user.name}
+                </option>
+              ))}
+            </select>
+            <p className="mt-1 text-xs text-zinc-500">
+              <span className="text-zinc-400">{2 - submissionsToday}/2 left today</span>
+            </p>
+          </div>
+
           {/* Recipient */}
           <div>
             <label className="block text-xs font-mono text-zinc-400 mb-2">
@@ -186,11 +216,6 @@ export function SubmitForm() {
                 </option>
               ))}
             </select>
-            <p className="mt-1 text-xs text-zinc-500">
-              Sending as: <span className="text-zinc-400">{senderName}</span>
-              {' · '}
-              <span className="text-zinc-400">{2 - submissionsToday}/2 left today</span>
-            </p>
           </div>
 
           {/* URL */}
